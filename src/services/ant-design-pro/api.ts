@@ -51,6 +51,7 @@ export async function rule(
   },
   options?: { [key: string]: any },
 ) {
+  console.log('shm params', params, options);
   return request<API.RuleList>('/api/rule', {
     method: 'GET',
     params: {

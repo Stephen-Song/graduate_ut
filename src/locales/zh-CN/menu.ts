@@ -1,4 +1,9 @@
 export default {
+  'menu.campus.account-manage': '校区账号管理',
+  'menu.user': '相关信息',
+  'menu.user.user-info': '住户信息',
+  'menu.user.house-info': '房屋信息',
+  'menu.user.fee-info': '收费项目信息',
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',

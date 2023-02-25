@@ -1,3 +1,4 @@
+// @ts-ignore
 // https://umijs.org/config/
 import { defineConfig } from '@umijs/max';
 import { join } from 'path';
@@ -152,4 +153,7 @@ export default defineConfig({
     strategy: 'normal',
   },
   requestRecord: {},
+  mock: {
+    include: ['src/pages/**/_mock.ts'],
+  },
 });

@@ -7,34 +7,31 @@ const Footer: React.FC = () => {
   const intl = useIntl();
   const defaultMessage = intl.formatMessage({
     id: 'app.copyright.produced',
-    defaultMessage: '蚂蚁集团体验技术部出品',
+    defaultMessage: '广东工业大学2019级 3119005293 宋豪铭 出品',
   });
 
   const currentYear = new Date().getFullYear();
 
   return (
     <DefaultFooter
-      style={{
-        background: 'none',
-      }}
       copyright={`${currentYear} ${defaultMessage}`}
       links={[
         {
-          key: 'Ant Design Pro',
-          title: 'Ant Design Pro',
-          href: 'https://pro.ant.design',
-          blankTarget: true,
+          key: '计算机学院',
+          title: '计算机学院 网络工程',
+          href: '',
+          blankTarget: false,
         },
         {
           key: 'github',
           title: <GithubOutlined />,
-          href: 'https://github.com/ant-design/ant-design-pro',
+          href: 'https://github.com/duochizhacai',
           blankTarget: true,
         },
         {
-          key: 'Ant Design',
-          title: 'Ant Design',
-          href: 'https://ant.design',
+          key: '宋豪铭',
+          title: '宋豪铭',
+          href: 'https://duochizhacai.github.io',
           blankTarget: true,
         },
       ]}

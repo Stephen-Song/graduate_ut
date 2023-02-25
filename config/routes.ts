@@ -52,6 +52,37 @@ export default [
     component: './TableList',
   },
   {
+    name: 'campus.account-manage',
+    icon: 'table',
+    path: '/campus',
+    component: './Campus-Account',
+  },
+  {
+    name: 'user',
+    icon: 'PaperClipOutlined',
+    path: '/user',
+    routes: [
+      {
+        name: 'user-info',
+        path: '/user/user-info',
+        icon: 'UserOutlined',
+        component: './User/User-Info',
+      },
+      {
+        name: 'house-info',
+        path: '/user/house-info',
+        icon: 'UserOutlined',
+        component: './User/House-Info',
+      },
+      {
+        name: 'fee-info',
+        path: '/user/fee-info',
+        icon: 'UserOutlined',
+        component: './User/Fee-Info',
+      },
+    ],
+  },
+  {
     path: '/',
     redirect: '/welcome',
   },
