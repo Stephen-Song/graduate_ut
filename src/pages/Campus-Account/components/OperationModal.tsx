@@ -1,4 +1,4 @@
-import { validateEmail, validatePhone } from '@/utils/helper';
+import { validateEmail, validatePhone } from '@/utils/validate';
 import { ModalForm, ProFormSelect, ProFormText } from '@ant-design/pro-form';
 import { Button, Result } from 'antd';
 import type { FC } from 'react';
