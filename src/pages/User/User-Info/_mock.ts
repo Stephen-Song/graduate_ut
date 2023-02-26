@@ -10,14 +10,16 @@ const genList = (current: number, pageSize: number) => {
     tableListDataSource.push({
       identity: String(random.integer(6)),
       name: random.cname(),
-      housenumber: `${random.integer(1, 9)}-${random.integer(100, 300)}`,
-      academy: random.string(5),
+      housenumber: '1-101',
+      academy: '计算机学院',
       phone: random.integer(13400000000, 13500000000),
       status: random.integer(0, 2),
       checkinTime: random.date(),
       checkoutTime: random.date(),
+      campus: '大学城校区',
     });
   }
+  console.log('shm 123', tableListDataSource);
   // tableListDataSource.reverse();
   return tableListDataSource;
 };

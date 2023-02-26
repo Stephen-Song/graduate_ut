@@ -106,13 +106,16 @@ const TableList: React.FC = () => {
       title: '房屋编号',
       dataIndex: 'houseNumber',
       valueType: 'select',
+      render(_, record) {
+        return record.housenumber;
+      },
       fieldProps: {
         placeholder: '请选择房屋编号',
         options: [
-          // TODO shm 补充房屋编号options
+          // TODO shm 补充学院options
           {
-            label: '123',
-            value: 'abc',
+            label: '1-101',
+            value: '1-101',
           },
         ],
       },
@@ -133,6 +136,28 @@ const TableList: React.FC = () => {
       },
     },
     {
+      title: '校区',
+      dataIndex: 'campus',
+      valueType: 'select',
+      render(_, record) {
+        return record.campus;
+      },
+      fieldProps: {
+        placeholder: '请选择校区',
+        options: [
+          // TODO shm 补充校区options
+          {
+            label: '大学城校区',
+            value: '大学城校区',
+          },
+          {
+            label: '东风路校区',
+            value: '东风路校区',
+          },
+        ],
+      },
+    },
+    {
       title: '电话',
       dataIndex: 'phone',
       valueType: 'phone',
@@ -144,16 +169,23 @@ const TableList: React.FC = () => {
       title: '入住时间',
       dataIndex: 'checkinTime',
       valueType: 'date',
+      fieldProps: {
+        placeholder: '请选择入住时间',
+      },
     },
     {
       title: '退住时间',
       dataIndex: 'checkoutTime',
       valueType: 'date',
+      fieldProps: {
+        placeholder: '请选择退住时间',
+      },
     },
     {
       title: '住房状态',
       dataIndex: 'status',
       hideInForm: true,
+      valueType: 'select',
       valueEnum: {
         0: {
           text: '已退房',
@@ -167,6 +199,9 @@ const TableList: React.FC = () => {
           text: '欠费状态',
           status: 'Error',
         },
+      },
+      fieldProps: {
+        placeholder: '请选择住房状态',
       },
     },
     {
@@ -204,7 +239,6 @@ const TableList: React.FC = () => {
           },
           renderFormItem(text, props) {
             const repalceText = text.replace(/[^\d]/g, '');
-            console.log('shm identity', repalceText);
             return (
               <Input
                 type="phone"
@@ -221,7 +255,6 @@ const TableList: React.FC = () => {
           },
           renderFormItem(text, props) {
             const isError = text && validatePhone('', text);
-            console.log('shm phone', text);
             return (
               <Input
                 {...props.fieldProps}

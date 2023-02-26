@@ -7,6 +7,7 @@ export type UserInfoType = {
   checkinTime: string;
   checkoutTime: string;
   status: UserStatusType;
+  campus: string;
 };
 
 export type UserInfoPaginationType = {
