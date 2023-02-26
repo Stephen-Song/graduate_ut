@@ -1,26 +1,26 @@
+import { validatePhone } from '@/utils/validate';
 import { PlusOutlined } from '@ant-design/icons';
 import { ProConfigProvider } from '@ant-design/pro-components';
-import { ModalForm, ProFormText, ProFormTextArea } from '@ant-design/pro-form';
 import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Button, Input, message } from 'antd';
+import { Button, Input, message, Modal } from 'antd';
 import React, { useRef, useState } from 'react';
-import type { FormValueType } from './components/UpdateForm';
-import UpdateForm from './components/UpdateForm';
-import { addRule, removeRule, rule, updateRule } from './service';
-import type { TableListItem, TableListPagination } from './type';
+import UserForm from './components/UserForm';
+import { addUserInfo, fetchUserInfo, removeUserInfo, updateUserInfo } from './service';
+import { FormType, UserInfoPaginationType, UserInfoType } from './type';
 /**
- * 添加节点
+ * 添加用户信息
  *
  * @param fields
  */
 
-const handleAdd = async (fields: TableListItem) => {
+const handleAdd = async (fields: UserInfoType) => {
+  console.log('shm fields', fields);
   const hide = message.loading('正在添加');
 
   try {
-    await addRule({ ...fields });
+    await addUserInfo({ ...fields });
     hide();
     message.success('添加成功');
     return true;
@@ -31,16 +31,16 @@ const handleAdd = async (fields: TableListItem) => {
   }
 };
 /**
- * 更新节点
+ * 更新用户信息
  *
  * @param fields
  */
 
-const handleUpdate = async (fields: FormValueType, currentRow?: TableListItem) => {
-  const hide = message.loading('正在配置');
+const handleUpdate = async (fields: Partial<UserInfoType>, currentRow?: UserInfoType) => {
+  const hide = message.loading('正在更新');
 
   try {
-    await updateRule({
+    await updateUserInfo({
       ...currentRow,
       ...fields,
     });
@@ -54,18 +54,19 @@ const handleUpdate = async (fields: FormValueType, currentRow?: TableListItem) =
   }
 };
 /**
- * 删除节点
+ * 删除用户信息
  *
  * @param selectedRows
  */
 
-const handleRemove = async (selectedRows: TableListItem[]) => {
+const handleRemove = async (selectedRows: UserInfoType | UserInfoType[]) => {
+  const selected = Array.isArray(selectedRows) ? selectedRows : [selectedRows];
   const hide = message.loading('正在删除');
   if (!selectedRows) return true;
 
   try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
+    await removeUserInfo({
+      key: selected.map((row) => row.key),
     });
     hide();
     message.success('删除成功，即将刷新');
@@ -78,16 +79,16 @@ const handleRemove = async (selectedRows: TableListItem[]) => {
 };
 
 const TableList: React.FC = () => {
-  /** 新建窗口的弹窗 */
-  const [createModalVisible, handleModalVisible] = useState<boolean>(false);
-  /** 分布更新窗口的弹窗 */
+  // userForm窗口的弹窗
+  const [userFormVisible, handleUserFormVisible] = useState<boolean>(false);
+  // 确认删除弹窗
+  const [confirmRemove, setConfirmRemove] = useState<boolean>(false);
 
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TableListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<TableListItem[]>([]);
+  const [currentRow, setCurrentRow] = useState<UserInfoType>();
+  const [selectedRowsState, setSelectedRows] = useState<UserInfoType[]>([]);
 
-  const columns: ProColumns<TableListItem, 'identityEnum'>[] = [
+  const columns: ProColumns<UserInfoType, 'identityEnum' | 'phone'>[] = [
     {
       title: '工编号',
       dataIndex: 'identity',
@@ -106,7 +107,9 @@ const TableList: React.FC = () => {
       dataIndex: 'houseNumber',
       valueType: 'select',
       fieldProps: {
+        placeholder: '请选择房屋编号',
         options: [
+          // TODO shm 补充房屋编号options
           {
             label: '123',
             value: 'abc',
@@ -118,48 +121,34 @@ const TableList: React.FC = () => {
       title: '学院',
       dataIndex: 'academy',
       valueType: 'select',
-      valueEnum: {
-        '0': {
-          text: '计算机学院',
-          status: 'default',
-        },
-        '1': {
-          text: '体育部',
-          status: 'error',
-        },
+      fieldProps: {
+        placeholder: '请选择学院',
+        options: [
+          // TODO shm 补充学院options
+          {
+            label: '计算机学院',
+            value: '计算机学院',
+          },
+        ],
       },
     },
     {
       title: '电话',
       dataIndex: 'phone',
-      // valueType(entity, type) {
-
-      // },
+      valueType: 'phone',
+      fieldProps: {
+        placeholder: '请输入合法的电话号码',
+      },
     },
     {
       title: '入住时间',
-      // sorter: true,
       dataIndex: 'checkinTime',
-      // dataIndex: 'updatedAt',
-      valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
-      },
+      valueType: 'date',
     },
     {
       title: '退住时间',
       dataIndex: 'checkoutTime',
-      valueType: 'dateTime',
+      valueType: 'date',
     },
     {
       title: '住房状态',
@@ -180,7 +169,6 @@ const TableList: React.FC = () => {
         },
       },
     },
-
     {
       title: '操作',
       dataIndex: 'option',
@@ -189,7 +177,7 @@ const TableList: React.FC = () => {
         <a
           key="edit"
           onClick={() => {
-            handleUpdateModalVisible(true);
+            handleUserFormVisible(true);
             setCurrentRow(record);
           }}
         >
@@ -198,7 +186,7 @@ const TableList: React.FC = () => {
         <a
           key="delete"
           onClick={() => {
-            console.log('shm click删除');
+            setConfirmRemove(true);
           }}
         >
           删除
@@ -211,11 +199,15 @@ const TableList: React.FC = () => {
     <ProConfigProvider
       valueTypeMap={{
         identityEnum: {
+          render(text) {
+            return text;
+          },
           renderFormItem(text, props) {
             const repalceText = text.replace(/[^\d]/g, '');
+            console.log('shm identity', repalceText);
             return (
               <Input
-                type="digital"
+                type="phone"
                 placeholder="请输入工编号"
                 {...props.fieldProps}
                 value={repalceText}
@@ -223,10 +215,28 @@ const TableList: React.FC = () => {
             );
           },
         },
+        phone: {
+          render(text) {
+            return text;
+          },
+          renderFormItem(text, props) {
+            const isError = text && validatePhone('', text);
+            console.log('shm phone', text);
+            return (
+              <Input
+                {...props.fieldProps}
+                type="phone"
+                maxLength={11}
+                status={isError ? 'error' : ''}
+                placeholder="请输入合法的电话号码"
+              />
+            );
+          },
+        },
       }}
     >
       <PageContainer>
-        <ProTable<TableListItem, TableListPagination>
+        <ProTable<UserInfoType, UserInfoPaginationType, 'identityEnum' | 'phone'>
           headerTitle="查询住户信息"
           actionRef={actionRef}
           rowKey="key"
@@ -237,14 +247,16 @@ const TableList: React.FC = () => {
             <Button
               type="primary"
               key="primary"
-              onClick={() => {
-                handleModalVisible(true);
+              onClick={async () => {
+                const res = await fetchUserInfo({ current: 1, pageSize: 20 });
+                console.log('shmres', res);
+                handleUserFormVisible(true);
               }}
             >
               <PlusOutlined /> 新建
             </Button>,
           ]}
-          request={rule}
+          request={fetchUserInfo}
           columns={columns}
           rowSelection={{
             onChange: (_, selectedRows) => {
@@ -266,10 +278,6 @@ const TableList: React.FC = () => {
                   {selectedRowsState.length}
                 </a>{' '}
                 项 &nbsp;&nbsp;
-                <span>
-                  服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}
-                  万
-                </span>
               </div>
             }
           >
@@ -279,45 +287,63 @@ const TableList: React.FC = () => {
                 setSelectedRows([]);
                 actionRef.current?.reloadAndRest?.();
               }}
+              type="primary"
             >
               批量删除
             </Button>
-            <Button type="primary">批量审批</Button>
           </FooterToolbar>
         )}
-        <ModalForm
-          title="新建规则"
-          width="400px"
-          visible={createModalVisible}
-          onVisibleChange={handleModalVisible}
-          onFinish={async (value) => {
-            const success = await handleAdd(value as TableListItem);
+        <UserForm
+          visible={userFormVisible}
+          onCancel={() => {
+            handleUserFormVisible(false);
+          }}
+          formType={FormType.CREATE_FORM}
+          onSubmit={async (value) => {
+            const success = await handleAdd(value as UserInfoType);
             if (success) {
-              handleModalVisible(false);
+              handleUserFormVisible(false);
               if (actionRef.current) {
                 actionRef.current.reload();
               }
             }
           }}
+        />
+        <UserForm
+          visible={userFormVisible}
+          onCancel={() => {
+            handleUserFormVisible(false);
+          }}
+          value={currentRow || {}}
+          formType={FormType.UPDATE_FORM}
+          onSubmit={async (value) => {
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUserFormVisible(false);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+        />
+        <Modal
+          open={confirmRemove}
+          title="删除"
+          onOk={() => {
+            handleRemove(currentRow!);
+          }}
+          onCancel={() => {
+            setConfirmRemove(false);
+          }}
         >
-          <ProFormText
-            rules={[
-              {
-                required: true,
-                message: '规则名称为必填项',
-              },
-            ]}
-            width="md"
-            name="name"
-          />
-          <ProFormTextArea width="md" name="desc" />
-        </ModalForm>
-        <UpdateForm
+          <b>确认是否删除该条数据吗？</b>
+        </Modal>
+        {/* <UpdateForm
           onSubmit={async (value) => {
             const success = await handleUpdate(value, currentRow);
 
             if (success) {
-              handleUpdateModalVisible(false);
+              handleUserFormVisible(false);
               setCurrentRow(undefined);
 
               if (actionRef.current) {
@@ -326,12 +352,12 @@ const TableList: React.FC = () => {
             }
           }}
           onCancel={() => {
-            handleUpdateModalVisible(false);
+            handleUserFormVisible(false);
             setCurrentRow(undefined);
           }}
           updateModalVisible={updateModalVisible}
           values={currentRow || {}}
-        />
+        /> */}
       </PageContainer>
     </ProConfigProvider>
   );

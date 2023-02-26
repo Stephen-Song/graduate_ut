@@ -1,32 +1,24 @@
 import type { Request, Response } from 'express';
-import { parse } from 'url';
-import type { TableListItem, TableListParams } from './data.d';
+import Mock from 'mockjs';
+import type { UserInfoType } from './type';
 
 // mock tableListDataSource
 const genList = (current: number, pageSize: number) => {
-  const tableListDataSource: TableListItem[] = [];
-
+  const tableListDataSource: UserInfoType[] = [];
+  const random = Mock.Random;
   for (let i = 0; i < pageSize; i += 1) {
-    const index = (current - 1) * 10 + i;
     tableListDataSource.push({
-      key: index,
-      disabled: i % 6 === 0,
-      href: 'https://ant.design',
-      avatar: [
-        'https://gw.alipayobjects.com/zos/rmsportal/eeHMaZBwmTvLdIwMfBpg.png',
-        'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
-      ][i % 2],
-      name: `TradeCode ${index}`,
-      owner: '曲丽丽',
-      desc: '这是一段描述',
-      callNo: Math.floor(Math.random() * 1000),
-      status: (Math.floor(Math.random() * 10) % 4).toString(),
-      updatedAt: new Date(),
-      createdAt: new Date(),
-      progress: Math.ceil(Math.random() * 100),
+      identity: String(random.integer(6)),
+      name: random.cname(),
+      housenumber: `${random.integer(1, 9)}-${random.integer(100, 300)}`,
+      academy: random.string(5),
+      phone: random.integer(13400000000, 13500000000),
+      status: random.integer(0, 2),
+      checkinTime: random.date(),
+      checkoutTime: random.date(),
     });
   }
-  tableListDataSource.reverse();
+  // tableListDataSource.reverse();
   return tableListDataSource;
 };
 
@@ -38,68 +30,66 @@ function getRule(req: Request, res: Response, u: string) {
     realUrl = req.url;
   }
   const { current = 1, pageSize = 10 } = req.query;
-  const params = parse(realUrl, true).query as unknown as TableListParams;
 
   let dataSource = [...tableListDataSource].slice(
     ((current as number) - 1) * (pageSize as number),
     (current as number) * (pageSize as number),
   );
-  if (params.sorter) {
-    const sorter = JSON.parse(params.sorter as any);
-    dataSource = dataSource.sort((prev, next) => {
-      let sortNumber = 0;
-      Object.keys(sorter).forEach((key) => {
-        if (sorter[key] === 'descend') {
-          if (prev[key] - next[key] > 0) {
-            sortNumber += -1;
-          } else {
-            sortNumber += 1;
-          }
-          return;
-        }
-        if (prev[key] - next[key] > 0) {
-          sortNumber += 1;
-        } else {
-          sortNumber += -1;
-        }
-      });
-      return sortNumber;
-    });
-  }
-  if (params.filter) {
-    const filter = JSON.parse(params.filter as any) as Record<string, string[]>;
-    if (Object.keys(filter).length > 0) {
-      dataSource = dataSource.filter((item) => {
-        return Object.keys(filter).some((key) => {
-          if (!filter[key]) {
-            return true;
-          }
-          if (filter[key].includes(`${item[key]}`)) {
-            return true;
-          }
-          return false;
-        });
-      });
-    }
-  }
+  // if (params.sorter) {
+  //   const sorter = JSON.parse(params.sorter as any);
+  //   dataSource = dataSource.sort((prev, next) => {
+  //     let sortNumber = 0;
+  //     Object.keys(sorter).forEach((key) => {
+  //       if (sorter[key] === 'descend') {
+  //         if (prev[key] - next[key] > 0) {
+  //           sortNumber += -1;
+  //         } else {
+  //           sortNumber += 1;
+  //         }
+  //         return;
+  //       }
+  //       if (prev[key] - next[key] > 0) {
+  //         sortNumber += 1;
+  //       } else {
+  //         sortNumber += -1;
+  //       }
+  //     });
+  //     return sortNumber;
+  //   });
+  // }
+  // if (params.filter) {
+  //   const filter = JSON.parse(params.filter as any) as Record<string, string[]>;
+  //   if (Object.keys(filter).length > 0) {
+  //     dataSource = dataSource.filter((item) => {
+  //       return Object.keys(filter).some((key) => {
+  //         if (!filter[key]) {
+  //           return true;
+  //         }
+  //         if (filter[key].includes(`${item[key]}`)) {
+  //           return true;
+  //         }
+  //         return false;
+  //       });
+  //     });
+  //   }
+  // }
 
-  if (params.name) {
-    dataSource = dataSource.filter((data) => data.name.includes(params.name || ''));
-  }
+  // if (params.name) {
+  //   dataSource = dataSource.filter((data) => data.name.includes(params.name || ''));
+  // }
 
-  let finalPageSize = 10;
-  if (params.pageSize) {
-    finalPageSize = parseInt(`${params.pageSize}`, 10);
-  }
+  // let finalPageSize = 10;
+  // if (params.pageSize) {
+  //   finalPageSize = parseInt(`${params.pageSize}`, 10);
+  // }
 
   const result = {
     data: dataSource,
     total: tableListDataSource.length,
     success: true,
-    pageSize: finalPageSize,
-    current: parseInt(`${params.currentPage}`, 10) || 1,
+    pageSize: 20,
+    current: 1,
   };
-
   return res.json(result);
 }
 
@@ -169,8 +159,8 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
 }
 
 export default {
-  'GET /api/getUserInfo': getRule,
-  'POST /api/rule': postRule,
-  'DELETE /api/addUserInfo': postRule,
-  'PUT /api/DeleteUserInfo': postRule,
+  'GET /api/user/fetchInfo': getRule,
+  'POST /api/user/addInfo': postRule,
+  'DELETE /api/user/addInfo': postRule,
+  'PUT /api/user/deleteInfo': postRule,
 };
