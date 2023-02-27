@@ -19,7 +19,6 @@ const genList = (current: number, pageSize: number) => {
       campus: '大学城校区',
     });
   }
-  console.log('shm 123', tableListDataSource);
   // tableListDataSource.reverse();
   return tableListDataSource;
 };
