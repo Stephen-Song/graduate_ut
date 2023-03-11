@@ -1,25 +1,25 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { ModalForm, ProFormText, ProFormTextArea } from '@ant-design/pro-form';
+import { ProConfigProvider } from '@ant-design/pro-components';
 import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
-import { Button, Input, message } from 'antd';
+import { Button, message, Modal, Switch } from 'antd';
 import React, { useRef, useState } from 'react';
-import type { FormValueType } from './components/UpdateForm';
-import UpdateForm from './components/UpdateForm';
-import { addRule, removeRule, rule, updateRule } from './service';
-import type { TableListItem, TableListPagination } from './type';
+import UserForm from './components/FeeForm';
+import { addUserInfo, fetchHouseInfo, removeUserInfo, updateUserInfo } from './service';
+import { FormType, HouseInfoType, UserInfoPaginationType } from './type';
 /**
- * 添加节点
+ * 添加用户信息
  *
  * @param fields
  */
 
-const handleAdd = async (fields: TableListItem) => {
+const handleAdd = async (fields: HouseInfoType) => {
+  console.log('shm fields', fields);
   const hide = message.loading('正在添加');
 
   try {
-    await addRule({ ...fields });
+    await addUserInfo({ ...fields });
     hide();
     message.success('添加成功');
     return true;
@@ -30,16 +30,16 @@ const handleAdd = async (fields: TableListItem) => {
   }
 };
 /**
- * 更新节点
+ * 更新用户信息
  *
  * @param fields
  */
 
-const handleUpdate = async (fields: FormValueType, currentRow?: TableListItem) => {
-  const hide = message.loading('正在配置');
+const handleUpdate = async (fields: Partial<HouseInfoType>, currentRow?: HouseInfoType) => {
+  const hide = message.loading('正在更新');
 
   try {
-    await updateRule({
+    await updateUserInfo({
       ...currentRow,
       ...fields,
     });
@@ -53,18 +53,19 @@ const handleUpdate = async (fields: FormValueType, currentRow?: TableListItem) =
   }
 };
 /**
- * 删除节点
+ * 删除用户信息
  *
  * @param selectedRows
  */
 
-const handleRemove = async (selectedRows: TableListItem[]) => {
+const handleRemove = async (selectedRows: HouseInfoType | HouseInfoType[]) => {
+  const selected = Array.isArray(selectedRows) ? selectedRows : [selectedRows];
   const hide = message.loading('正在删除');
   if (!selectedRows) return true;
 
   try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
+    await removeUserInfo({
+      key: selected.map((row) => row.key),
     });
     hide();
     message.success('删除成功，即将刷新');
@@ -77,214 +78,206 @@ const handleRemove = async (selectedRows: TableListItem[]) => {
 };
 
 const TableList: React.FC = () => {
-  /** 新建窗口的弹窗 */
-  const [createModalVisible, handleModalVisible] = useState<boolean>(false);
-  /** 分布更新窗口的弹窗 */
+  // houseInfoForm新建窗口的弹窗
+  const [houseAddVisible, handleHouseAddVisible] = useState<boolean>(false);
+  const [houseUpdateVisible, handleHouseUpdateVisible] = useState<boolean>(false);
+  // 确认删除弹窗
+  const [confirmRemove, setConfirmRemove] = useState<boolean>(false);
 
-  const [updateModalVisible, handleUpdateModalVisible] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TableListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<TableListItem[]>([]);
+  const [currentRow, setCurrentRow] = useState<HouseInfoType>();
+  const [selectedRowsState, setSelectedRows] = useState<HouseInfoType[]>([]);
 
-  const columns: ProColumns<TableListItem>[] = [
+  const columns: ProColumns<HouseInfoType, 'fitCampus'>[] = [
     {
-      title: '工编号',
-      dataIndex: 'identity',
-    },
-    {
-      title: '姓名',
-      dataIndex: 'name',
-    },
-    {
-      title: '房屋编号',
-      dataIndex: 'houseNumber',
-    },
-    {
-      title: '学院',
-      dataIndex: 'academy',
-    },
-    {
-      title: '电话',
-      dataIndex: 'phone',
-    },
-    {
-      title: '入住时间',
-      // sorter: true,
-      // dataIndex: 'checkinTime',
-      dataIndex: 'updatedAt',
-      valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-
-        if (`${status}` === '0') {
-          return false;
-        }
-
-        if (`${status}` === '3') {
-          return <Input {...rest} placeholder="请输入异常原因！" />;
-        }
-
-        return defaultRender(item);
+      title: '收费项目',
+      dataIndex: 'chargeItem',
+      valueType: 'text',
+      fieldProps: {
+        placeholder: '请输入收费项目',
       },
     },
     {
-      title: '退住时间',
-      dataIndex: 'checkoutTime',
-    },
-    {
-      title: '住房状态',
-      dataIndex: 'status',
-      hideInForm: true,
-      valueEnum: {
-        0: {
-          text: '已退房',
-          status: 'Default',
-        },
-        1: {
-          text: '正常缴费在住',
-          status: 'Processing',
-        },
-        2: {
-          text: '欠费状态',
-          status: 'Error',
-        },
+      title: '单位',
+      dataIndex: 'unit',
+      valueType: 'text',
+      fieldProps: {
+        placeholder: '请输入单位',
       },
     },
-
+    {
+      title: '单价',
+      dataIndex: 'unitPrice',
+      valueType: 'text',
+      fieldProps: {
+        placeholder: '请输入单价',
+      },
+    },
+    {
+      title: '是否启用',
+      dataIndex: 'enable',
+      valueType: 'radioButton',
+      hideInSearch: true,
+    },
+    {
+      title: '适用校区',
+      dataIndex: 'fitCampus',
+      valueType: 'fitCampus',
+      width: '300px',
+    },
     {
       title: '操作',
       dataIndex: 'option',
       valueType: 'option',
+      width: '250px',
       render: (_, record) => [
-        <a
+        <Button
+          type="default"
           key="edit"
           onClick={() => {
-            handleUpdateModalVisible(true);
+            handleHouseUpdateVisible(true);
             setCurrentRow(record);
           }}
         >
           编辑
-        </a>,
-        <a
+        </Button>,
+        <Button
+          type="primary"
+          danger
           key="delete"
           onClick={() => {
-            console.log('shm click删除');
+            setConfirmRemove(true);
           }}
         >
           删除
-        </a>,
+        </Button>,
       ],
     },
   ];
 
   return (
-    <PageContainer>
-      <ProTable<TableListItem, TableListPagination>
-        headerTitle="查询住户信息"
-        actionRef={actionRef}
-        rowKey="key"
-        search={{
-          labelWidth: 120,
-        }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalVisible(true);
-            }}
-          >
-            <PlusOutlined /> 新建
-          </Button>,
-        ]}
-        request={rule}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            console.log('shm onChange');
-            setSelectedRows(selectedRows);
+    <ProConfigProvider
+      valueTypeMap={{
+        fitCampus: {
+          renderFormItem(text, _props) {
+            return (
+              <>
+                {text
+                  ? text.map((item: any) => (
+                      <Switch disabled={false} defaultChecked={item.check} key={item} />
+                    ))
+                  : null}
+              </>
+            );
           },
-        }}
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              已选择{' '}
-              <a
-                style={{
-                  fontWeight: 600,
-                }}
-              >
-                {selectedRowsState.length}
-              </a>{' '}
-              项 &nbsp;&nbsp;
-              <span>
-                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)} 万
-              </span>
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            批量删除
-          </Button>
-          <Button type="primary">批量审批</Button>
-        </FooterToolbar>
-      )}
-      <ModalForm
-        title="新建规则"
-        width="400px"
-        visible={createModalVisible}
-        onVisibleChange={handleModalVisible}
-        onFinish={async (value) => {
-          const success = await handleAdd(value as TableListItem);
-          if (success) {
-            handleModalVisible(false);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-      >
-        <ProFormText
-          rules={[
-            {
-              required: true,
-              message: '规则名称为必填项',
-            },
+        },
+      }}
+    >
+      <PageContainer>
+        <ProTable<HouseInfoType, UserInfoPaginationType, 'fitCampus'>
+          headerTitle="查询房屋信息"
+          actionRef={actionRef}
+          rowKey="key"
+          search={{
+            labelWidth: 120,
+          }}
+          toolBarRender={() => [
+            <Button
+              type="primary"
+              key="primary"
+              onClick={() => {
+                handleHouseAddVisible(true);
+              }}
+            >
+              <PlusOutlined /> 新建
+            </Button>,
           ]}
-          width="md"
-          name="name"
+          request={fetchHouseInfo}
+          columns={columns}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              console.log('shm onChange');
+              setSelectedRows(selectedRows);
+            },
+          }}
         />
-        <ProFormTextArea width="md" name="desc" />
-      </ModalForm>
-      <UpdateForm
-        onSubmit={async (value) => {
-          const success = await handleUpdate(value, currentRow);
-
-          if (success) {
-            handleUpdateModalVisible(false);
-            setCurrentRow(undefined);
-
-            if (actionRef.current) {
-              actionRef.current.reload();
+        {selectedRowsState?.length > 0 && (
+          <FooterToolbar
+            extra={
+              <div>
+                已选择{' '}
+                <a
+                  style={{
+                    fontWeight: 600,
+                  }}
+                >
+                  {selectedRowsState.length}
+                </a>{' '}
+                项 &nbsp;&nbsp;
+              </div>
             }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalVisible(false);
-          setCurrentRow(undefined);
-        }}
-        updateModalVisible={updateModalVisible}
-        values={currentRow || {}}
-      />
-    </PageContainer>
+          >
+            <Button
+              onClick={async () => {
+                await handleRemove(selectedRowsState);
+                setSelectedRows([]);
+                actionRef.current?.reloadAndRest?.();
+              }}
+              type="primary"
+            >
+              批量删除
+            </Button>
+          </FooterToolbar>
+        )}
+        <UserForm
+          visible={houseAddVisible}
+          onCancel={() => {
+            handleHouseAddVisible(false);
+          }}
+          formType={FormType.CREATE_FORM}
+          onSubmit={async (value) => {
+            console.log('shm housefeeadd', value);
+            const success = await handleAdd(value as HouseInfoType);
+            if (success) {
+              handleHouseAddVisible(false);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+              return true;
+            }
+          }}
+        />
+        <UserForm
+          visible={houseUpdateVisible}
+          onCancel={() => {
+            handleHouseUpdateVisible(false);
+          }}
+          value={currentRow || {}}
+          formType={FormType.UPDATE_FORM}
+          onSubmit={async (value) => {
+            const success = await handleUpdate(value);
+            if (success) {
+              handleHouseUpdateVisible(false);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+        />
+        <Modal
+          open={confirmRemove}
+          title="删除"
+          onOk={() => {
+            handleRemove(currentRow!);
+          }}
+          onCancel={() => {
+            setConfirmRemove(false);
+          }}
+        >
+          <b>确认是否删除该条数据吗？</b>
+        </Modal>
+      </PageContainer>
+    </ProConfigProvider>
   );
 };
 

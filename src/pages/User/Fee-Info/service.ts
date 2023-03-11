@@ -1,8 +1,8 @@
 import { request } from '@umijs/max';
-import { TableListItem } from './type';
+import { HouseInfoType } from './type';
 
-/** 获取规则列表 GET /api/rule */
-export async function rule(
+/** 获取规则列表 GET /api/user/fetchInfo */
+export async function fetchHouseInfo(
   params: {
     // query
     /** 当前的页码 */
@@ -13,11 +13,11 @@ export async function rule(
   options?: { [key: string]: any },
 ) {
   return request<{
-    data: TableListItem[];
+    data: HouseInfoType[];
     /** 列表的内容总数 */
     total?: number;
     success?: boolean;
-  }>('/api/rule', {
+  }>('/api/user/fetchHouseInfo', {
     method: 'GET',
     params: {
       ...params,
@@ -26,27 +26,30 @@ export async function rule(
   });
 }
 
-/** 新建规则 PUT /api/rule */
-export async function updateRule(data: { [key: string]: any }, options?: { [key: string]: any }) {
-  return request<TableListItem>('/api/getUserInfo', {
-    data,
-    method: 'PUT',
-    ...(options || {}),
-  });
-}
-
-/** 新建规则 POST /api/rule */
-export async function addRule(data: { [key: string]: any }, options?: { [key: string]: any }) {
-  return request<TableListItem>('/api/addUserInfo', {
+/** 新建规则 POST /api/user/addHouseInfo */
+export async function addUserInfo(data: { [key: string]: any }, options?: { [key: string]: any }) {
+  return request<HouseInfoType>('/api/user/addHouseInfo', {
     data,
     method: 'POST',
     ...(options || {}),
   });
 }
 
-/** 删除规则 DELETE /api/rule */
-export async function removeRule(data: { key: number[] }, options?: { [key: string]: any }) {
-  return request<Record<string, any>>('/api/DeleteUserInfo', {
+/** 新建规则 PUT /api/user/updateHouseInfo */
+export async function updateUserInfo(
+  data: { [key: string]: any },
+  options?: { [key: string]: any },
+) {
+  return request<HouseInfoType>('/api/user/updateHouseInfo', {
+    data,
+    method: 'PUT',
+    ...(options || {}),
+  });
+}
+
+/** 删除规则 DELETE /api/user/deleteHouseInfo */
+export async function removeUserInfo(data: { key: number[] }, options?: { [key: string]: any }) {
+  return request<Record<string, any>>('/api/user/deleteHouseInfo', {
     data,
     method: 'DELETE',
     ...(options || {}),

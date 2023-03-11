@@ -1,36 +1,32 @@
-export type TableListItem = {
-  key: number;
-  disabled?: boolean;
-  href: string;
-  avatar: string;
-  name: string;
-  owner: string;
-  desc: string;
-  callNo: number;
-  status: string;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
+import { UserStatusType } from '../User-Info/type';
+
+export type HouseInfoType = {
+  housenumber: string;
+  houseType: HouseType;
+  campus: string;
+  address: string;
+  status: UserStatusType;
 };
 
-export type TableListPagination = {
+export type UserInfoPaginationType = {
   total: number;
   pageSize: number;
   current: number;
 };
 
 export type TableListData = {
-  list: TableListItem[];
-  pagination: Partial<TableListPagination>;
+  list: HouseInfoType[];
+  pagination: Partial<UserInfoPaginationType>;
 };
 
-export type TableListParams = {
-  status?: string;
-  name?: string;
-  desc?: string;
-  key?: number;
-  pageSize?: number;
-  currentPage?: number;
-  filter?: Record<string, any[]>;
-  sorter?: Record<string, any>;
-};
+export enum HouseType {
+  // 民用
+  CIVILAL,
+  // 商用
+  COMMERCIAL,
+}
+
+export enum FormType {
+  CREATE_FORM = 'create_form',
+  UPDATE_FORM = 'update_form',
+}
