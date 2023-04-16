@@ -43,7 +43,6 @@ const UserForm: React.FC<FormPropsType> = (props) => {
         size: 'default',
         direction: 'vertical',
       }}
-      // onFormChange={onFormChange}
       onFinish={onSubmit}
       stepsFormRender={(dom, submitter) => {
         return (

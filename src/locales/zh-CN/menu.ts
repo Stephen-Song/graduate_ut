@@ -4,6 +4,7 @@ export default {
   'menu.user.user-info': '住户信息',
   'menu.user.house-info': '房屋信息',
   'menu.user.fee-info': '收费项目信息',
+  'menu.charge': '收费',
   'menu.welcome': '欢迎',
   'menu.more-blocks': '更多区块',
   'menu.home': '首页',

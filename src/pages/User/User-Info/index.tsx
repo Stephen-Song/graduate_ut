@@ -1,11 +1,11 @@
 import { validatePhone } from '@/utils/validate';
 import { PlusOutlined } from '@ant-design/icons';
 import { ProConfigProvider } from '@ant-design/pro-components';
-import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
-import type { ActionType, ProColumns } from '@ant-design/pro-table';
+import { PageContainer } from '@ant-design/pro-layout';
+import type { ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Button, Input, message, Modal } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import UserForm from './components/UserForm';
 import { addUserInfo, fetchUserInfo, removeUserInfo, updateUserInfo } from './service';
 import { FormType, UserInfoPaginationType, UserInfoType } from './type';
@@ -84,9 +84,7 @@ const TableList: React.FC = () => {
   // 确认删除弹窗
   const [confirmRemove, setConfirmRemove] = useState<boolean>(false);
 
-  const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<UserInfoType>();
-  const [selectedRowsState, setSelectedRows] = useState<UserInfoType[]>([]);
 
   const columns: ProColumns<UserInfoType, 'identityEnum' | 'phone'>[] = [
     {
@@ -271,7 +269,6 @@ const TableList: React.FC = () => {
       <PageContainer>
         <ProTable<UserInfoType, UserInfoPaginationType, 'identityEnum' | 'phone'>
           headerTitle="查询住户信息"
-          actionRef={actionRef}
           rowKey="key"
           search={{
             labelWidth: 120,
@@ -291,41 +288,7 @@ const TableList: React.FC = () => {
           ]}
           request={fetchUserInfo}
           columns={columns}
-          rowSelection={{
-            onChange: (_, selectedRows) => {
-              console.log('shm onChange');
-              setSelectedRows(selectedRows);
-            },
-          }}
         />
-        {selectedRowsState?.length > 0 && (
-          <FooterToolbar
-            extra={
-              <div>
-                已选择{' '}
-                <a
-                  style={{
-                    fontWeight: 600,
-                  }}
-                >
-                  {selectedRowsState.length}
-                </a>{' '}
-                项 &nbsp;&nbsp;
-              </div>
-            }
-          >
-            <Button
-              onClick={async () => {
-                await handleRemove(selectedRowsState);
-                setSelectedRows([]);
-                actionRef.current?.reloadAndRest?.();
-              }}
-              type="primary"
-            >
-              批量删除
-            </Button>
-          </FooterToolbar>
-        )}
         <UserForm
           visible={userFormVisible}
           onCancel={() => {
@@ -336,9 +299,6 @@ const TableList: React.FC = () => {
             const success = await handleAdd(value as UserInfoType);
             if (success) {
               handleUserFormVisible(false);
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
             }
           }}
         />
@@ -353,9 +313,6 @@ const TableList: React.FC = () => {
             const success = await handleUpdate(value);
             if (success) {
               handleUserFormVisible(false);
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
             }
           }}
         />

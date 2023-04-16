@@ -1,7 +1,7 @@
 import { validatePhone } from '@/utils/validate';
 import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { ProConfigProvider } from '@ant-design/pro-components';
-import { FooterToolbar, PageContainer } from '@ant-design/pro-layout';
+import { PageContainer } from '@ant-design/pro-layout';
 import type { ActionType, ProColumns } from '@ant-design/pro-table';
 import ProTable from '@ant-design/pro-table';
 import { Button, Input, message, Modal, Popover, Progress, Tooltip } from 'antd';
@@ -87,7 +87,6 @@ const TableList: React.FC = () => {
 
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<HouseInfoType>();
-  const [selectedRowsState, setSelectedRows] = useState<HouseInfoType[]>([]);
 
   const columns: ProColumns<HouseInfoType, 'identityEnum' | 'phone'>[] = [
     {
@@ -292,41 +291,8 @@ const TableList: React.FC = () => {
           ]}
           request={fetchHouseInfo}
           columns={columns}
-          rowSelection={{
-            onChange: (_, selectedRows) => {
-              console.log('shm onChange');
-              setSelectedRows(selectedRows);
-            },
-          }}
         />
-        {selectedRowsState?.length > 0 && (
-          <FooterToolbar
-            extra={
-              <div>
-                已选择{' '}
-                <a
-                  style={{
-                    fontWeight: 600,
-                  }}
-                >
-                  {selectedRowsState.length}
-                </a>{' '}
-                项 &nbsp;&nbsp;
-              </div>
-            }
-          >
-            <Button
-              onClick={async () => {
-                await handleRemove(selectedRowsState);
-                setSelectedRows([]);
-                actionRef.current?.reloadAndRest?.();
-              }}
-              type="primary"
-            >
-              批量删除
-            </Button>
-          </FooterToolbar>
-        )}
+
         <UserForm
           visible={houseAddVisible}
           onCancel={() => {

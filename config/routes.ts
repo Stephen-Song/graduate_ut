@@ -83,6 +83,12 @@ export default [
     ],
   },
   {
+    path: '/charge',
+    name: 'charge',
+    icon: 'smile',
+    component: './Charge',
+  },
+  {
     path: '/',
     redirect: '/welcome',
   },
